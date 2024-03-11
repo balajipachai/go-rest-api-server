@@ -1,16 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
+
+	"example.com/library"
 )
 
-func helloWorld(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello, Balaji is the wisest golang developer!\n")
-}
-
 func main() {
-	http.HandleFunc("/", helloWorld)
+	http.HandleFunc("/", library.HelloWorld)
 	log.Fatal(http.ListenAndServe(":8545", nil))
 }
