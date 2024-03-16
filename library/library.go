@@ -1,49 +1,34 @@
 package library
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	_ "github.com/mattn/go-sqlite3"
 )
 
-type Person struct {
-	name string
-	age  int
+type App struct {
+	DB   *sql.DB
+	Port string
+}
+
+func (a *App) Initialize() {
+	var err error
+	a.DB, err = sql.Open("sqlite3", "../practiceit.db")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 }
 
 func helloWorld(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Balaji Pachai, is the wisest blockchain developer")
+	fmt.Fprintf(w, "Balaji Pachai, is the wisest blockchain developer\n")
 }
 
-func getRequest(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "This is a GET request\n")
-}
+func (a *App) Run() {
+	http.HandleFunc("/", helloWorld)
+	fmt.Println("Server started and listening on: ", a.Port)
+	log.Fatal(http.ListenAndServe(a.Port, nil))
 
-func postRequest(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "This is a POST request\n")
-}
-
-func deleteRequest(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "This is a DELETE request\n")
-}
-
-func updatePerson(w http.ResponseWriter, r *http.Request) {
-	body := r.Body
-	fmt.Fprintf(w, "The received body is %s\n", body)
-}
-
-func Run(address string) {
-	r := mux.NewRouter()
-
-	r.HandleFunc("/", getRequest).Methods("GET")
-	r.HandleFunc("/", postRequest).Methods("POST")
-	r.HandleFunc("/", deleteRequest).Methods("DELETE")
-	r.HandleFunc("/hello", helloWorld).Methods("GET")
-	r.HandleFunc("/person", updatePerson).Methods("POST")
-
-	http.Handle("/", r)
-	fmt.Println("Server started on port:", address)
-	log.Fatal(http.ListenAndServe(":8545", nil))
 }

@@ -36,8 +36,14 @@ func main() {
 
 		rows.Scan(&p.id, &p.name, &p.inventory, &p.price)
 
-		fmt.Println("Producet ", p.id, " ", p.name, " ", p.inventory, " ", p.price)
+		fmt.Println("Product ", p.id, " ", p.name, " ", p.inventory, " ", p.price)
 	}
 
-	library.Run("8545")
+	app := library.App{}
+	app.Port = ":8545"
+
+	// Initialize DB connection
+	app.Initialize()
+
+	app.Run()
 }
