@@ -32,10 +32,28 @@ func (a *App) Initialize() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	fmt.Println("DB connection successful: ", a.DB)
 	a.Router = mux.NewRouter()
 	a.initializeRoutes()
 }
+
+//TODO Create GET & POST handlers for orders & add the routes
+/**
+CREATE TABLE orders (
+id int not null auto_increment primary key,
+customerName varchar(256) not null,
+total int not null,
+status varchar(64) not null
+)
+
+CREATE TABLE order_items(
+	order_id INT,
+	product_id INT,
+	quantity INT,
+	FOREIGN KEY (order_id) REFERENCES orders(id)
+	FOREIGN KEY (product_id) REFERENCES products(id)
+	PRIMARY KEY (order_id, product_id)
+)
+*/
 
 // The `initializeRoutes()` method in the provided Go code snippet is setting up a route in the Gorilla
 // Mux router for handling HTTP GET requests to the root path ("/").
@@ -43,6 +61,36 @@ func (a *App) initializeRoutes() {
 	a.Router.HandleFunc("/products", a.allProducts).Methods("GET")
 	a.Router.HandleFunc("/product/{id}", a.getProductById).Methods("GET")
 	a.Router.HandleFunc("/products", a.addProduct).Methods("POST")
+	a.Router.HandleFunc("/orders", a.getOrders).Methods("GET")
+	a.Router.HandleFunc("/orders", a.createOrder).Methods("POST")
+}
+
+func (a *App) createOrder(w http.ResponseWriter, r *http.Request) {
+	reqBody, _ := io.ReadAll(r.Body)
+
+	var o order
+
+	json.Unmarshal(reqBody, &o)
+
+	err := o.createOrder(a.DB)
+
+	if err != nil {
+		fmt.Println("createOrder error: ", err)
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondWithJson(w, http.StatusOK, o)
+}
+
+func (a *App) getOrders(w http.ResponseWriter, r *http.Request) {
+	orders, err := getOrders(a.DB)
+
+	if err != nil {
+		fmt.Println("getOrders error: ", err)
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondWithJson(w, http.StatusOK, orders)
 }
 
 func (a *App) addProduct(w http.ResponseWriter, r *http.Request) {

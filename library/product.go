@@ -16,6 +16,72 @@ type product struct {
 	Status      string `json:"status"`
 }
 
+type order struct {
+	ID           int    `json:"id"`
+	CustomerName string `json:"customerName"`
+	ProductId    int    `json:"productId"`
+	ProductName  string `json:"productName"`
+	ProductPrice string `json:"productPrice"`
+	Quantity     int    `json:"quantity"`
+	Total        int    `json:"total"`
+	OrderStatus  string `json:"orderStatus"`
+}
+
+func getOrders(db *sql.DB) ([]order, error) {
+	rows, err := db.Query("SELECT o.id, o.customerName, p.name, p.price, oi.quantity, o.Total, o.Status FROM orders o, products p, order_items oi WHERE o.id = oi.order_id AND oi.product_id = p.id")
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	orders := []order{}
+
+	for rows.Next() {
+		var o order
+
+		if err := rows.Scan(&o.ID, &o.CustomerName, &o.ProductName, &o.ProductPrice, &o.Quantity, &o.Total, &o.OrderStatus); err != nil {
+			return nil, err
+		}
+		orders = append(orders, o)
+	}
+	return orders, nil
+}
+
+func (o *order) createOrder(db *sql.DB) error {
+	res, err := db.Exec("INSERT INTO orders(customerName, total, status) VALUES(?, ?, ?)", o.CustomerName, o.Total, o.OrderStatus)
+
+	if err != nil {
+		fmt.Println("createOrder first error: ", err.Error())
+		return err
+	}
+
+	id, err := res.LastInsertId()
+
+	if err != nil {
+		fmt.Println("createOrder second error: ", err.Error())
+		return err
+	}
+
+	orderId := int(id)
+
+	res1, err := db.Exec("INSERT INTO order_items(order_id, product_id, quantity) VALUES(?, ?, ?)", orderId, o.ProductId, o.Quantity)
+
+	if err != nil {
+		fmt.Println("createOrder third error: ", err.Error())
+		return err
+	}
+	id1, err := res1.LastInsertId()
+
+	if err != nil {
+		fmt.Println("createOrder fourth error: ", err.Error())
+		return err
+	}
+
+	fmt.Println("Inserted order_items id: ", id1)
+	return nil
+}
+
 // The `getProducts` function retrieves product data from a database and returns it as a slice of
 // product structs.
 func getProducts(db *sql.DB) ([]product, error) {
