@@ -2,6 +2,7 @@ package library
 
 import (
 	"database/sql"
+	"fmt"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -42,4 +43,21 @@ func getProducts(db *sql.DB) ([]product, error) {
 // database based on the product's ID.
 func (p *product) getProduct(db *sql.DB) error {
 	return db.QueryRow("SELECT productCode, name, inventory, price, status FROM products WHERE id = ?", p.ID).Scan(&p.ProductCode, &p.Name, &p.Inventory, &p.Price, &p.Status)
+}
+
+func (p *product) createProduct(db *sql.DB) error {
+	res, err := db.Exec("INSERT INTO products(productCode, name, inventory, price, status) VALUES (?,?,?,?,?)", p.ProductCode, p.Name, p.Inventory, p.Price, p.Status)
+
+	if err != nil {
+		fmt.Println("createProduct err1: ", err.Error())
+		return err
+	}
+	id, err := res.LastInsertId()
+
+	if err != nil {
+		fmt.Println("createProduct err2: ", err.Error())
+		return err
+	}
+	p.ID = int(id)
+	return nil
 }
