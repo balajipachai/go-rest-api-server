@@ -36,7 +36,7 @@ func main() {
 
 		rows.Scan(&p.id, &p.name, &p.inventory, &p.price)
 
-		fmt.Println("Product ", p.id, " ", p.name, " ", p.inventory, " ", p.price)
+		fmt.Println(p.id, " ", p.name, " ", p.inventory, " ", p.price)
 	}
 
 	app := library.App{}
